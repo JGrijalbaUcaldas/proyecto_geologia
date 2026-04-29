@@ -1,3 +1,22 @@
+// Importar Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+// Configuración de Firebase (igual a la del HTML)
+const firebaseConfig = {
+    apiKey: "AIzaSyDanK18_exa_GbMc2vWnwFrMGSR-Dw1gDI",
+    authDomain: "proyecto-geologia.firebaseapp.com",
+    projectId: "proyecto-geologia",
+    storageBucket: "proyecto-geologia.firebasestorage.app",
+    messagingSenderId: "1041014004819",
+    appId: "1:1041014004819:web:fc5e0cfb38aea4d33b7aa6",
+    measurementId: "G-PEZ7N7Q9Y5"
+};
+
+// Inicializar Firebase y Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // Variable global para la base de datos
 let geologicalDatabase = [];
 
@@ -83,8 +102,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mostrar mensaje inicial
     resultsContainer.innerHTML = '<p class="info-message">Ingresa los parámetros de búsqueda</p>';
 
-    // Cargar la base de datos
-    cargarBaseDatos();
+    // Cargar la base de datos desde Firestore
+    cargarBaseDatos().then(() => {
+        console.log('✅ Base de datos inicializada');
+    }).catch(err => {
+        console.error('Error al inicializar la base de datos:', err);
+    });
 });
 
 // Función para cerrar detalles
@@ -94,45 +117,57 @@ function cerrarDetalles() {
     especimenSeleccionado = null;
 }
 
-// Función para cargar la base de datos
-function cargarBaseDatos() {
-    // Si hay datos guardados en localStorage, úsalos (preservar cambios del usuario)
-    const stored = localStorage.getItem('geoDB_store');
-    if (stored) {
-        try {
-            geologicalDatabase = JSON.parse(stored);
-            console.log('✅ Base de datos cargada desde localStorage');
-            console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
-            return;
-        } catch (err) {
-            console.warn('⚠️ Error parseando localStorage, cargando desde JSON original');
-            localStorage.removeItem('geoDB_store');
-        }
-    }
-
-    fetch('db_geologia.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            geologicalDatabase = data;
-            console.log('✅ Base de datos cargada correctamente desde JSON');
-            console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
-        })
-        .catch(error => {
-            console.error('❌ Error al cargar la base de datos:', error);
-            resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo cargar la base de datos. Asegúrate de: 1) Usar un servidor HTTP (no file://), 2) El archivo db_geologia.json exista en la carpeta del proyecto.</p>';
+// Función para cargar la base de datos desde Firestore
+async function cargarBaseDatos() {
+    try {
+        console.log('📡 Cargando datos desde Firestore...');
+        const querySnapshot = await getDocs(collection(db, "geologia"));
+        geologicalDatabase = [];
+        
+        querySnapshot.forEach((docSnapshot) => {
+            const data = docSnapshot.data();
+            geologicalDatabase.push({
+                id: docSnapshot.id,
+                ...data
+            });
         });
+        
+        console.log('✅ Base de datos cargada desde Firestore');
+        console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
+        
+        // Si no hay datos en Firestore, cargar desde JSON inicial
+        if (geologicalDatabase.length === 0) {
+            console.log('📋 Firestore vacío, cargando datos iniciales desde JSON...');
+            await cargarDatosIniciales();
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar desde Firestore:', error);
+        resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo conectar a Firestore. Verifica tu conexión a internet.</p>';
+    }
 }
 
-function guardarEnLocalStorage() {
+// Función para cargar datos iniciales del JSON a Firestore (solo si está vacío)
+async function cargarDatosIniciales() {
     try {
-        localStorage.setItem('geoDB_store', JSON.stringify(geologicalDatabase));
-    } catch (err) {
-        console.error('Error guardando en localStorage', err);
+        const response = await fetch('db_geologia.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        for (const item of data) {
+            const docRef = await addDoc(collection(db, "geologia"), item);
+            geologicalDatabase.push({
+                id: docRef.id,
+                ...item
+            });
+        }
+        
+        console.log('✅ Datos iniciales importados a Firestore');
+        console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
+    } catch (error) {
+        console.error('❌ Error cargando datos iniciales:', error);
+        resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo cargar los datos iniciales. Asegúrate de que db_geologia.json exista.</p>';
     }
 }
 
@@ -376,10 +411,10 @@ function cerrarModal() {
 }
 
 // Función para guardar cambios
-function guardarCambios(e) {
+async function guardarCambios(e) {
     e.preventDefault();
     const idRaw = document.getElementById('editId').value;
-    const id = idRaw ? parseInt(idRaw) : null;
+    const id = idRaw ? idRaw : null;
 
     const payload = {
         nombre: document.getElementById('editNombre').value.trim() || 'Sin nombre',
@@ -389,52 +424,84 @@ function guardarCambios(e) {
         caracteristicas: document.getElementById('editCaracteristicas').value
             .split('\n')
             .map(c => c.trim())
-            .filter(c => c !== '')
+            .filter(c => c !== ''),
+        fechaActualizacion: new Date().toISOString()
     };
 
-    if (id) {
-        // Editar existente
-        const item = geologicalDatabase.find(x => x.id === id);
-        if (!item) return alert('Registro no encontrado');
-        item.nombre = payload.nombre;
-        item.tipo = payload.tipo;
-        item.descripcion = payload.descripcion;
-        item.imagen = payload.imagen;
-        item.caracteristicas = payload.caracteristicas;
-        guardarEnLocalStorage();
-        cerrarModal();
-        mostrarResultados(ultimosBuscados);
-        alert('✅ Registro actualizado correctamente');
-    } else {
-        // Crear nuevo
-        const maxId = geologicalDatabase.reduce((acc, cur) => Math.max(acc, cur.id || 0), 0);
-        const newId = maxId + 1 || Date.now();
-        const newItem = Object.assign({ id: newId }, payload);
-        geologicalDatabase.push(newItem);
-        guardarEnLocalStorage();
-        cerrarModal();
-        // Refrescar búsqueda para incluir nuevo item
-        realizarBusqueda();
-        // Mostrar detalles del nuevo elemento
-        especimenSeleccionado = newId;
-        mostrarDetalles(newItem);
-        alert('✅ Nuevo registro creado correctamente');
+    try {
+        if (id) {
+            // Editar existente
+            const item = geologicalDatabase.find(x => x.id === id);
+            if (!item) {
+                alert('❌ Registro no encontrado');
+                return;
+            }
+            
+            // Actualizar en Firestore
+            const docRef = doc(db, "geologia", id);
+            await updateDoc(docRef, payload);
+            
+            // Actualizar en memoria
+            Object.assign(item, payload);
+            cerrarModal();
+            mostrarResultados(ultimosBuscados);
+            alert('✅ Registro actualizado correctamente');
+        } else {
+            // Crear nuevo
+            payload.fechaCreacion = new Date().toISOString();
+            
+            // Guardar en Firestore
+            const docRef = await addDoc(collection(db, "geologia"), payload);
+            
+            // Agregar a la lista en memoria con el ID de Firestore
+            const newItem = {
+                id: docRef.id,
+                ...payload
+            };
+            geologicalDatabase.push(newItem);
+            
+            cerrarModal();
+            // Refrescar búsqueda para incluir nuevo item
+            realizarBusqueda();
+            // Mostrar detalles del nuevo elemento
+            especimenSeleccionado = newItem.id;
+            mostrarDetalles(newItem);
+            alert('✅ Nuevo registro creado correctamente');
+        }
+    } catch (error) {
+        console.error('❌ Error guardando en Firestore:', error);
+        alert('❌ Error al guardar: ' + error.message);
     }
 }
 
 // Función para eliminar registro
-function eliminarRegistro(id) {
+async function eliminarRegistro(id) {
     if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
-        const index = geologicalDatabase.findIndex(x => x.id === id);
-        if (index > -1) {
-            const nombreEliminado = geologicalDatabase[index].nombre;
-            geologicalDatabase.splice(index, 1);
-            
-            // Actualizar últimos buscados
-            ultimosBuscados = ultimosBuscados.filter(x => x.id !== id);
-            
-            mostrarResultados(ultimosBuscados);
-            alert(`✅ Registro "${nombreEliminado}" eliminado correctamente`);
+        try {
+            const index = geologicalDatabase.findIndex(x => x.id === id);
+            if (index > -1) {
+                const nombreEliminado = geologicalDatabase[index].nombre;
+                
+                // Eliminar de Firestore
+                await deleteDoc(doc(db, "geologia", id));
+                
+                // Eliminar de la lista en memoria
+                geologicalDatabase.splice(index, 1);
+                
+                // Actualizar últimos buscados
+                ultimosBuscados = ultimosBuscados.filter(x => x.id !== id);
+                
+                mostrarResultados(ultimosBuscados);
+                alert(`✅ Registro "${nombreEliminado}" eliminado correctamente`);
+                
+                // Cerrar detalles si estaba mostrando el registro eliminado
+                if (especimenSeleccionado === id) {
+                    cerrarDetalles();
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error eliminando de Firestore:', error);
+            alert('❌ Error al eliminar: ' + error.message);
         }
     }
 }
