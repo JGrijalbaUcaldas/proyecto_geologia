@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos Geológica - Búsqueda de Piedras y Moluscos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Base de Datos Geológica</h1>
+            <p>Busca piedras, minerales y moluscos fósiles</p>
+        </header>
+
+        <main>
+            <!-- Sección de búsqueda -->
+            <section class="search-section">
+                <h2>Búsqueda</h2>
+                <form id="searchForm" class="search-form">
+                    <div class="form-group">
+                        <label for="searchName">Nombre del espécimen:</label>
+                        <input 
+                            type="text" 
+                            id="searchName" 
+                            placeholder="Ej: Cuarzo, Amatista, Ammonites..."
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchType">Tipo:</label>
+                        <select id="searchType">
+                            <option value="">-- Todos los tipos --</option>
+                            <option value="Piedra">Piedra</option>
+                            <option value="Mineral">Mineral</option>
+                            <option value="Molusco">Molusco</option>
+                            <option value="Fósil">Fósil</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-search">Buscar</button>
+                    <button type="reset" class="btn-reset">Limpiar</button>
+                </form>
+            </section>
+
+            <!-- Sección de resultados -->
+            <section class="results-section">
+                <div class="results-header">
+                    <h2>Resultados</h2>
+                    <button id="toggleView" class="btn-view-toggle" title="Cambiar visualización">
+                        📊 Vista Tabla
+                    </button>
+                </div>
+                <div id="resultsContainer" class="results-container">
+                    <p class="info-message">Ingresa los parámetros de búsqueda y presiona "Buscar"</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Base de Datos Geológica - Proyecto Electiva Tecnológica I</p>
+        </footer>
+    </div>
+
+    <!-- Modal para editar -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Registro</h2>
+            <form id="editForm" class="edit-form">
+                <input type="hidden" id="editId">
+                
+                <div class="form-group">
+                    <label for="editNombre">Nombre:</label>
+                    <input type="text" id="editNombre" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editTipo">Tipo:</label>
+                    <select id="editTipo" required>
+                        <option value="Piedra">Piedra</option>
+                        <option value="Mineral">Mineral</option>
+                        <option value="Molusco">Molusco</option>
+                        <option value="Fósil">Fósil</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDescripcion">Descripción:</label>
+                    <textarea id="editDescripcion" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editImagen">Imagen (emoji):</label>
+                    <input type="text" id="editImagen" maxlength="2" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editCaracteristicas">Características (una por línea):</label>
+                    <textarea id="editCaracteristicas" rows="4" required></textarea>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="btn-save">Guardar cambios</button>
+                    <button type="button" class="btn-cancel" id="cancelEdit">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Librería html2pdf para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>
