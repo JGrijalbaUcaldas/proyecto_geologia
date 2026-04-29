@@ -16,7 +16,17 @@
         <main>
             <!-- Sección de búsqueda -->
             <section class="search-section">
-                <h2>Búsqueda</h2>
+                <div class="search-header">
+                    <h2>Búsqueda</h2>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button id="openCreateBtn" class="btn-imprimir-principal" title="Crear registro">
+                            ➕ Crear Registro
+                        </button>
+                        <button id="btnPrincipal" class="btn-imprimir-principal" title="Imprimir ficha seleccionada" style="display: none;">
+                            📄 Imprimir Ficha
+                        </button>
+                    </div>
+                </div>
                 <form id="searchForm" class="search-form">
                     <div class="form-group">
                         <label for="searchName">Nombre del espécimen:</label>
@@ -39,22 +49,65 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn-search">Buscar</button>
-                    <button type="reset" class="btn-reset">Limpiar</button>
+                    <div class="form-group">
+                        <label for="sortingOption">Ordenar por:</label>
+                        <select id="sortingOption">
+                            <option value="nombre">Nombre (A-Z)</option>
+                            <option value="nombre-desc">Nombre (Z-A)</option>
+                            <option value="tipo">Tipo</option>
+                            <option value="reciente">Más reciente</option>
+                            <option value="antiguo">Más antiguo</option>
+                        </select>
+                    </div>
+
+                    <button type="reset" class="btn-reset">🔄 Limpiar</button>
                 </form>
             </section>
 
-            <!-- Sección de resultados -->
-            <section class="results-section">
-                <div class="results-header">
-                    <h2>Resultados</h2>
-                    <button id="toggleView" class="btn-view-toggle" title="Cambiar visualización">
-                        📊 Vista Tabla
-                    </button>
-                </div>
-                <div id="resultsContainer" class="results-container">
-                    <p class="info-message">Ingresa los parámetros de búsqueda y presiona "Buscar"</p>
-                </div>
+            <!-- Contenedor de resultados y detalles -->
+            <section class="main-content">
+                <!-- Sección de resultados -->
+                <section class="results-section">
+                    <div class="results-header">
+                        <h2>Resultados</h2>
+                        <button id="toggleView" class="btn-view-toggle" title="Cambiar visualización">
+                            📊 Vista Tabla
+                        </button>
+                    </div>
+                    <div id="resultsContainer" class="results-container">
+                        <p class="info-message">Ingresa los parámetros de búsqueda</p>
+                    </div>
+                </section>
+
+                <!-- Sección de detalles (derecha) -->
+                <aside class="details-section" id="detailsSection" style="display: none;">
+                    <div class="details-header">
+                        <h3>Información Detallada</h3>
+                        <button class="btn-close-details" id="closeDetails">✕</button>
+                    </div>
+                    <div class="details-content">
+                        <div class="detail-image" id="detailImage">🔷</div>
+                        <h2 id="detailName">Nombre</h2>
+                        <p class="detail-type" id="detailType">Tipo</p>
+                        
+                        <div class="detail-section">
+                            <h4>Descripción</h4>
+                            <p id="detailDescription">Sin descripción</p>
+                        </div>
+
+                        <div class="detail-section">
+                            <h4>Características Especiales</h4>
+                            <ul id="detailCharacteristics" class="characteristics-detail-list">
+                                <li>Cargando...</li>
+                            </ul>
+                        </div>
+
+                        <div class="detail-actions">
+                            <button class="btn-edit-detail" id="editDetailBtn">✏️ Editar</button>
+                            <button class="btn-delete-detail" id="deleteDetailBtn">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                </aside>
             </section>
         </main>
 
@@ -92,8 +145,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="editImagen">Imagen (emoji):</label>
-                    <input type="text" id="editImagen" maxlength="2" required>
+                    <label for="editImagen">Imagen (emoji o URL):</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="editImagen" placeholder="Emoji o URL de imagen (https://...)" style="flex:1;" required>
+                        <button type="button" id="extractImageBtn" class="btn-reset">Extraer</button>
+                    </div>
+                    <div id="editImagePreview" style="margin-top:10px;">
+                        <!-- Previsualización de la imagen o emoji -->
+                    </div>
                 </div>
 
                 <div class="form-group">
