@@ -101,8 +101,9 @@
                         </button>
                     </div>
                     <div id="resultsContainer" class="results-container">
-                        <p class="info-message">Ingresa los parámetros de búsqueda</p>
+                        <p class="info-message">Cargando registros...</p>
                     </div>
+                    <div id="paginationContainer" class="pagination-container"></div>
                 </section>
 
                 <!-- Sección de detalles (derecha) -->
@@ -257,20 +258,24 @@
                     <input type="text" id="editClasifico" placeholder="Alexander Lemus">
                 </div>
 
+
+
                 <div class="form-group">
-                    <label for="editImagen">Imagen (emoji o URL):</label>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <input type="text" id="editImagen" placeholder="Emoji o URL de imagen (https://...)" style="flex:1;" required>
-                        <button type="button" id="extractImageBtn" class="btn-reset">Extraer</button>
-                    </div>
-                    <div id="editImagePreview" style="margin-top:10px;">
-                        <!-- Previsualización de la imagen o emoji -->
+                    <label for="editFotoRuta">Foto ruta / URL:</label>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                        <input type="text" id="editFotoRuta" placeholder="https://... o URL de imagen" style="flex:1;">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="editFotoRuta">Foto ruta / URL:</label>
-                    <input type="text" id="editFotoRuta" placeholder="C:/... o https://...">
+                    <label for="editFotoUpload">O sube una foto desde tu dispositivo:</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="file" id="editFotoUpload" accept="image/*" style="flex:1;">
+                        <button type="button" id="previewUploadBtn" class="btn-reset">Vista previa</button>
+                    </div>
+                    <div id="editFotoPreview" style="margin-top:10px; max-height: 150px; overflow: auto;">
+                        <!-- Previsualización de la imagen subida -->
+                    </div>
                 </div>
 
                 <div class="form-group">

@@ -40,11 +40,16 @@ let closeModal;
 let cancelEditBtn;
 let detailsSection;
 let closeDetailsBtn;
+let paginationContainer;
 
 // Estado de visualización
 let currentView = 'grid'; // 'grid' o 'table'
 let ultimosBuscados = []; // Guardar últimos resultados
 let especimenSeleccionado = null; // Registro seleccionado
+
+// Variables de paginación
+let currentPage = 1;
+const itemsPerPage = 10;
 
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
@@ -63,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     searchColectorInput = document.getElementById('searchColector');
     searchFechaInput = document.getElementById('searchFecha');
     resultsContainer = document.getElementById('resultsContainer');
+    paginationContainer = document.getElementById('paginationContainer');
     toggleViewBtn = document.getElementById('toggleView');
     editModal = document.getElementById('editModal');
     editForm = document.getElementById('editForm');
@@ -71,13 +77,13 @@ document.addEventListener('DOMContentLoaded', function() {
     detailsSection = document.getElementById('detailsSection');
     closeDetailsBtn = document.getElementById('closeDetails');
     const openCreateBtn = document.getElementById('openCreateBtn');
-    const extractImageBtn = document.getElementById('extractImageBtn');
-    const editImagenInput = document.getElementById('editImagen');
-    const editImagePreview = document.getElementById('editImagePreview');
     const editNombreGroup = document.getElementById('editNombreGroup');
     const editTipoGroup = document.getElementById('editTipoGroup');
     const editNombreInput = document.getElementById('editNombre');
     const editTipoInput = document.getElementById('editTipo');
+    const editFotoUpload = document.getElementById('editFotoUpload');
+    const previewUploadBtn = document.getElementById('previewUploadBtn');
+    const editFotoPreview = document.getElementById('editFotoPreview');
 
     // Agregar event listeners
     searchGeneroInput.addEventListener('input', realizarBusqueda);
@@ -100,19 +106,22 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelEditBtn.addEventListener('click', cerrarModal);
     closeDetailsBtn.addEventListener('click', cerrarDetalles);
     if (openCreateBtn) openCreateBtn.addEventListener('click', abrirModalCrear);
-    if (extractImageBtn) extractImageBtn.addEventListener('click', async function() {
-        const val = editImagenInput.value.trim();
-        if (!val) return alert('Ingresa una URL o emoji en el campo de imagen');
-        const found = await extractImageFromLink(val);
-        if (found) {
-            editImagenInput.value = found;
-            setEditImagePreview(found);
-        } else {
-            alert('No se pudo extraer imagen desde el enlace proporcionado. Si es una URL directa de imagen, pégala directamente.');
-        }
-    });
-    if (editImagenInput) editImagenInput.addEventListener('input', function() { setEditImagePreview(this.value); });
     editForm.addEventListener('submit', guardarCambios);
+
+    // Event listeners para carga de foto
+    if (editFotoUpload) {
+        editFotoUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                previewUploadBtn.style.display = 'inline-block';
+            }
+        });
+    }
+    if (previewUploadBtn) {
+        previewUploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            convertirFotoABase64(editFotoUpload, editFotoPreview, document.getElementById('editFotoRuta'));
+        });
+    }
 
     // Cerrar modal si se hace click afuera
     window.addEventListener('click', function(e) {
@@ -121,12 +130,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Mostrar mensaje inicial
-    resultsContainer.innerHTML = '<p class="info-message">Ingresa los parámetros de búsqueda</p>';
-
     // Cargar la base de datos desde Firestore
     cargarBaseDatos().then(() => {
         console.log('✅ Base de datos inicializada');
+        // Mostrar los primeros 10 registros automáticamente
+        currentPage = 1;
+        ultimosBuscados = aplicarOrdenamiento(geologicalDatabase);
+        mostrarResultados(ultimosBuscados);
     }).catch(err => {
         console.error('Error al inicializar la base de datos:', err);
     });
@@ -267,6 +277,9 @@ function realizarBusqueda() {
 
     // Guardar última búsqueda
     ultimosBuscados = resultados;
+    
+    // Reiniciar a la primera página
+    currentPage = 1;
 
     // Mostrar resultados
     mostrarResultados(resultados);
@@ -282,6 +295,9 @@ function alternarVisualizacion() {
         toggleViewBtn.textContent = '📊 Vista de Tabla';
     }
     
+    // Reiniciar a la primera página
+    currentPage = 1;
+    
     // Mostrar últimos resultados con nueva vista
     mostrarResultados(ultimosBuscados);
 }
@@ -293,14 +309,28 @@ function mostrarResultados(resultados) {
 
     if (resultados.length === 0) {
         resultsContainer.innerHTML = '<p class="no-results">No se encontraron resultados. Intenta con otros parámetros.</p>';
+        paginationContainer.innerHTML = '';
         return;
     }
 
-    if (currentView === 'table') {
-        mostrarResultadosTabla(resultados);
-    } else {
-        mostrarResultadosGrid(resultados);
+    // Calcular paginación
+    const totalPages = Math.ceil(resultados.length / itemsPerPage);
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
     }
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedResults = resultados.slice(startIndex, endIndex);
+
+    if (currentView === 'table') {
+        mostrarResultadosTabla(paginatedResults);
+    } else {
+        mostrarResultadosGrid(paginatedResults);
+    }
+
+    // Renderizar controles de paginación
+    renderPaginationControls(resultados.length);
 }
 
 // Mostrar resultados en vista de grid (tarjetas)
@@ -566,10 +596,21 @@ function abrirModalEditar(id) {
     document.getElementById('editColector').value = getFieldValue(item, 'Colector', 'colector');
     document.getElementById('editFecha').value = getFieldValue(item, 'Fecha_Recoleccion', 'fechaRecoleccion');
     document.getElementById('editClasifico').value = getFieldValue(item, 'Clasifico', 'clasifico');
-    document.getElementById('editImagen').value = item.imagen;
-    document.getElementById('editFotoRuta').value = getFieldValue(item, 'Foto_Ruta', 'fotoRuta');
+    
+    // Cargar la foto desde el campo imagen (que contiene URL o base64)
+    const foto = getFieldValue(item, 'imagen', 'Foto_Ruta', 'fotoRuta');
+    document.getElementById('editFotoRuta').value = foto;
+    document.getElementById('editFotoUpload').value = '';
+    
+    // Cargar previsualización si existe foto
+    const previewDiv = document.getElementById('editFotoPreview');
+    if (foto && (isBase64(foto) || isValidUrl(foto))) {
+        previewDiv.innerHTML = `<img src="${foto}" alt="Vista previa" style="max-width: 100%; height: auto; border-radius: 4px;">`;
+    } else {
+        previewDiv.innerHTML = '';
+    }
+    
     document.getElementById('editCaracteristicas').value = (item.caracteristicas || []).join('\n');
-    setEditImagePreview(item.imagen);
     
     editModal.style.display = 'block';
 }
@@ -598,10 +639,10 @@ function abrirModalCrear() {
     document.getElementById('editColector').value = '';
     document.getElementById('editFecha').value = '';
     document.getElementById('editClasifico').value = '';
-    document.getElementById('editImagen').value = '🔷';
     document.getElementById('editFotoRuta').value = '';
+    document.getElementById('editFotoUpload').value = '';
+    document.getElementById('editFotoPreview').innerHTML = '';
     document.getElementById('editCaracteristicas').value = '';
-    setEditImagePreview('🔷');
     editModal.style.display = 'block';
 }
 
@@ -609,7 +650,6 @@ function abrirModalCrear() {
 function cerrarModal() {
     editModal.style.display = 'none';
     editForm.reset();
-    setEditImagePreview('');
 }
 
 function isValidUrl(value) {
@@ -621,34 +661,219 @@ function isValidUrl(value) {
     }
 }
 
+function isBase64(value) {
+    if (!value || typeof value !== 'string') return false;
+    return value.startsWith('data:image/');
+}
+
 function renderImageMarkup(value) {
     if (!value) return '';
-    if (isValidUrl(value)) {
+    if (isValidUrl(value) || isBase64(value)) {
         return `<img src="${value}" alt="Imagen del espécimen" class="result-image-item" />`;
     }
     return `${value}`;
 }
 
-function setEditImagePreview(value) {
-    const preview = document.getElementById('editImagePreview');
-    preview.innerHTML = '';
-    if (!value) {
+// Función para convertir archivo a base64
+function convertirFotoABase64(fileInput, previewDiv, fotorutaInput) {
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Por favor selecciona un archivo de imagen');
         return;
     }
 
-    if (isValidUrl(value)) {
-        preview.innerHTML = `<img src="${value}" alt="Vista previa" class="preview-image">`;
-    } else {
-        preview.textContent = value;
+    // Validar que sea una imagen
+    if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona un archivo de imagen válido');
+        return;
     }
+
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const base64String = e.target.result;
+        
+        // Mostrar previsualización
+        previewDiv.innerHTML = `<img src="${base64String}" alt="Vista previa" style="max-width: 100%; height: auto; border-radius: 4px;">`;
+        
+        // Guardar en el input oculto (como base64)
+        fotorutaInput.value = base64String;
+        
+        alert('✅ Imagen cargada. Guarda los cambios para que se almacene permanentemente.');
+    };
+    
+    reader.onerror = function() {
+        alert('Error al leer el archivo');
+    };
+    
+    reader.readAsDataURL(file);
 }
 
-async function extractImageFromLink(value) {
-    if (isValidUrl(value)) {
-        return value;
+// Función para renderizar controles de paginación
+function renderPaginationControls(totalItems) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    paginationContainer.innerHTML = '';
+
+    if (totalPages <= 1) {
+        return;
     }
-    return null;
+
+    const paginationDiv = document.createElement('div');
+    paginationDiv.style.cssText = `
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 10px;
+    `;
+
+    // Botón "Anterior"
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '◀ Anterior';
+    prevBtn.className = 'pagination-btn';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.style.cssText = `
+        padding: 8px 12px;
+        cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'};
+        opacity: ${currentPage === 1 ? '0.5' : '1'};
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    `;
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            mostrarResultados(ultimosBuscados);
+            window.scrollTo(0, 0);
+        }
+    });
+    paginationDiv.appendChild(prevBtn);
+
+    // Números de página
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        const firstBtn = document.createElement('button');
+        firstBtn.textContent = '1';
+        firstBtn.className = 'pagination-btn-number';
+        firstBtn.style.cssText = `
+            padding: 6px 10px;
+            background-color: white;
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #0066cc;
+            font-weight: bold;
+        `;
+        firstBtn.addEventListener('click', () => {
+            currentPage = 1;
+            mostrarResultados(ultimosBuscados);
+            window.scrollTo(0, 0);
+        });
+        paginationDiv.appendChild(firstBtn);
+
+        if (startPage > 2) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding: 0 5px;';
+            paginationDiv.appendChild(dots);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.className = i === currentPage ? 'pagination-btn-active' : 'pagination-btn-number';
+        pageBtn.style.cssText = `
+            padding: 6px 10px;
+            background-color: ${i === currentPage ? '#0066cc' : 'white'};
+            color: ${i === currentPage ? 'white' : '#0066cc'};
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: ${i === currentPage ? 'bold' : 'normal'};
+        `;
+        pageBtn.addEventListener('click', () => {
+            currentPage = i;
+            mostrarResultados(ultimosBuscados);
+            window.scrollTo(0, 0);
+        });
+        paginationDiv.appendChild(pageBtn);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding: 0 5px;';
+            paginationDiv.appendChild(dots);
+        }
+
+        const lastBtn = document.createElement('button');
+        lastBtn.textContent = totalPages;
+        lastBtn.className = 'pagination-btn-number';
+        lastBtn.style.cssText = `
+            padding: 6px 10px;
+            background-color: white;
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #0066cc;
+            font-weight: bold;
+        `;
+        lastBtn.addEventListener('click', () => {
+            currentPage = totalPages;
+            mostrarResultados(ultimosBuscados);
+            window.scrollTo(0, 0);
+        });
+        paginationDiv.appendChild(lastBtn);
+    }
+
+    // Botón "Siguiente"
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Siguiente ▶';
+    nextBtn.className = 'pagination-btn';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.style.cssText = `
+        padding: 8px 12px;
+        cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'};
+        opacity: ${currentPage === totalPages ? '0.5' : '1'};
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    `;
+    nextBtn.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            mostrarResultados(ultimosBuscados);
+            window.scrollTo(0, 0);
+        }
+    });
+    paginationDiv.appendChild(nextBtn);
+
+    // Información de página
+    const pageInfo = document.createElement('span');
+    pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    pageInfo.style.cssText = `
+        margin-left: 10px;
+        font-weight: bold;
+        color: #333;
+    `;
+    paginationDiv.appendChild(pageInfo);
+
+    paginationContainer.appendChild(paginationDiv);
 }
+
+
 
 // Función para guardar cambios
 async function guardarCambios(e) {
@@ -657,11 +882,13 @@ async function guardarCambios(e) {
     const id = idRaw ? idRaw : null;
     const currentItem = id ? geologicalDatabase.find(x => x.id === id) : null;
 
+    const fotoRutaValue = document.getElementById('editFotoRuta').value.trim() || '';
+
     const payload = {
         nombre: currentItem ? currentItem.nombre : document.getElementById('editNombre').value.trim() || 'Sin nombre',
         tipo: currentItem ? currentItem.tipo : document.getElementById('editTipo').value,
         descripcion: document.getElementById('editDescripcion').value.trim() || 'Sin descripción',
-        imagen: document.getElementById('editImagen').value.trim() || '🔷',
+        imagen: fotoRutaValue || '🔷',
         Genero_Especie: document.getElementById('editGeneroEspecie').value.trim() || '',
         Numero_Coleccion: document.getElementById('editNumeroColeccion').value.trim() || '',
         Coordenadas: {
@@ -678,7 +905,7 @@ async function guardarCambios(e) {
         Colector: document.getElementById('editColector').value.trim() || '',
         Fecha_Recoleccion: document.getElementById('editFecha').value || '',
         Clasifico: document.getElementById('editClasifico').value.trim() || '',
-        Foto_Ruta: document.getElementById('editFotoRuta').value.trim() || '',
+        Foto_Ruta: fotoRutaValue || '',
         caracteristicas: document.getElementById('editCaracteristicas').value
             .split('\n')
             .map(c => c.trim())
