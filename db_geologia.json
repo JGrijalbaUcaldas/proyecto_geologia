@@ -1,0 +1,158 @@
+[
+    {
+        "id": 1,
+        "nombre": "Cuarzo",
+        "tipo": "Mineral",
+        "descripcion": "Mineral cristalino muy común compuesto de dióxido de silicio. Se encuentra en prácticamente todas las rocas ígneas, metamórficas y sedimentarias.",
+        "imagen": "🔷",
+        "caracteristicas": [
+            "Dureza: 7 Mohs",
+            "Color: Incoloro, blanco, rosado, ahumado",
+            "Brillo: Vítreo",
+            "Densidad: 2.65 g/cm³"
+        ]
+    },
+    {
+        "id": 2,
+        "nombre": "Amatista",
+        "tipo": "Mineral",
+        "descripcion": "Variedad púrpura del cuarzo, conocida por su belleza y propiedades como piedra preciosa. Se forma en cavidades de rocas volcánicas.",
+        "imagen": "💜",
+        "caracteristicas": [
+            "Dureza: 7 Mohs",
+            "Color: Púrpura a violeta",
+            "Origen: Brasil, Uruguay, Madagascar",
+            "Transparencia: Transparente a translúcido"
+        ]
+    },
+    {
+        "id": 3,
+        "nombre": "Calcita",
+        "tipo": "Mineral",
+        "descripcion": "Carbonato de calcio, mineral muy común que forma calizas, mármol y espeleotemas. Presenta birefringencia óptica.",
+        "imagen": "⬜",
+        "caracteristicas": [
+            "Dureza: 3 Mohs",
+            "Color: Incoloro, blanco, amarillento",
+            "Reactividad: Efervece con ácido clorhídrico",
+            "Sistema cristalino: Trigonal"
+        ]
+    },
+    {
+        "id": 4,
+        "nombre": "Pirita",
+        "tipo": "Mineral",
+        "descripcion": "Sulfuro de hierro con brillo metálico y aspecto dorado. A menudo se confunde con oro pero es mucho más dura y quebradiza.",
+        "imagen": "✨",
+        "caracteristicas": [
+            "Dureza: 6-6.5 Mohs",
+            "Color: Amarillo pálido a dorado",
+            "Brillo: Metálico",
+            "Densidad: 5.01 g/cm³"
+        ]
+    },
+    {
+        "id": 5,
+        "nombre": "Feldespato",
+        "tipo": "Piedra",
+        "descripcion": "Familia de silicatos que incluye más de 150 especies minerales. Es el mineral más abundante en la corteza terrestre.",
+        "imagen": "⬛",
+        "caracteristicas": [
+            "Dureza: 6-6.5 Mohs",
+            "Color: Blanco, rosado, gris",
+            "Componentes: Silicio, aluminio, oxígeno",
+            "Abundancia: 60% de la corteza terrestre"
+        ]
+    },
+    {
+        "id": 6,
+        "nombre": "Mármol",
+        "tipo": "Piedra",
+        "descripcion": "Roca metamórfica resultante de la transformación de caliza por calor y presión. Utilizado ampliamente en escultura y construcción.",
+        "imagen": "🏛️",
+        "caracteristicas": [
+            "Dureza: 3-4 Mohs",
+            "Color: Blanco, rosa, negro, veteado",
+            "Origen: Transformación de piedra caliza",
+            "Usos: Escultura, construcción, decoración"
+        ]
+    },
+    {
+        "id": 7,
+        "nombre": "Granito",
+        "tipo": "Piedra",
+        "descripcion": "Roca ígnea plutónica compuesta de cuarzo, feldespato y mica. Una de las rocas más duras y duraderas.",
+        "imagen": "⚫",
+        "caracteristicas": [
+            "Dureza: 7-8 Mohs",
+            "Composición: Cuarzo, feldespato, mica",
+            "Textura: Cristalina gruesa",
+            "Usos: Construcción, pavimentos, monumentos"
+        ]
+    },
+    {
+        "id": 8,
+        "nombre": "Basalto",
+        "tipo": "Piedra",
+        "descripcion": "Roca volcánica oscura de grano fino. Es la roca más común en la corteza oceánica.",
+        "imagen": "🌑",
+        "caracteristicas": [
+            "Dureza: 5-6 Mohs",
+            "Color: Negro a gris oscuro",
+            "Origen: Magma basáltico",
+            "Textura: Afanítica (grano fino)"
+        ]
+    },
+    {
+        "id": 9,
+        "nombre": "Ammonites",
+        "tipo": "Fósil",
+        "descripcion": "Cefalópodos marinos extintos con concha espiral. Abundan en sedimentos marinos del Mesozoico.",
+        "imagen": "🐚",
+        "caracteristicas": [
+            "Período: Jurásico y Cretácico",
+            "Tamaño: De centímetros a metros",
+            "Edad: Hasta 250 millones de años",
+            "Utilidad: Fósil índice para dataciones"
+        ]
+    },
+    {
+        "id": 10,
+        "nombre": "Trilobites",
+        "tipo": "Fósil",
+        "descripcion": "Artrópodos marinos primitivos extintos hace 252 millones de años. Muy comunes en rocas paleozoicas.",
+        "imagen": "🪨",
+        "caracteristicas": [
+            "Período: Paleozoico",
+            "Dimensiones: 2-70 cm típicamente",
+            "Edad: 521-252 millones de años",
+            "Características: Cuerpo segmentado trilobado"
+        ]
+    },
+    {
+        "id": 11,
+        "nombre": "Ostras fósiles",
+        "tipo": "Molusco",
+        "descripcion": "Moluscos bivalvos que vivieron en ambientes marinos. Sus conchas fosilizan excepcionalmente bien y forman acumulaciones.",
+        "imagen": "🦪",
+        "caracteristicas": [
+            "Período: Mesozoico y Cenozoico",
+            "Hábitat: Ambientes marinos",
+            "Conservación: Excelente",
+            "Valor: Indicador ambiental"
+        ]
+    },
+    {
+        "id": 12,
+        "nombre": "Belemnites",
+        "tipo": "Molusco",
+        "descripcion": "Cefalópodos fósiles relacionados con los actuales calamares. El rostro calcáreo es lo que generalmente se fosiliza.",
+        "imagen": "✏️",
+        "caracteristicas": [
+            "Período: Mesozoico",
+            "Estructura: Rostro, cámara, aleta",
+            "Abundancia: Muy comunes en el Jurásico",
+            "Tamaño: 5-30 cm típicamente"
+        ]
+    }
+]
