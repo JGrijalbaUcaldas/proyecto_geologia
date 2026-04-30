@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos Geológica - Búsqueda de Piedras y Moluscos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Base de Datos Fosiles de Colombia</h1>
+            <p>Busca piedras, minerales y moluscos fósiles</p>
+        </header>
+
+        <main>
+            <!-- Sección de búsqueda -->
+            <section class="search-section">
+                <div class="search-header">
+                    <h2>Búsqueda</h2>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" id="openCreateBtn" class="btn-primary" title="Crear registro">
+                            ➕ Crear Registro
+                        </button>
+                    </div>
+                </div>
+                <form id="searchForm" class="search-form">
+                    <div class="form-group">
+                        <label for="searchGenero">Género / Especie:</label>
+                        <input 
+                            type="text" 
+                            id="searchGenero" 
+                            placeholder="Nicklesia pulchella"
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sortingOption">Ordenar por:</label>
+                        <select id="sortingOption">
+                            <option value="nombre">Nombre (A-Z)</option>
+                            <option value="nombre-desc">Nombre (Z-A)</option>
+                            <option value="tipo">Tipo</option>
+                            <option value="reciente">Más reciente</option>
+                            <option value="antiguo">Más antiguo</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchUnidad">Unidad estratigráfica:</label>
+                        <input type="text" id="searchUnidad" placeholder="Formación La Paja" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchLocalidad">Localidad:</label>
+                        <input type="text" id="searchLocalidad" placeholder="Mesa de los Santos" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchEdad">Edad:</label>
+                        <input type="text" id="searchEdad" placeholder="Barremiano inferior" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchClado">Clado / Clasificación:</label>
+                        <input type="text" id="searchClado" placeholder="Ammonoideos" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchAsociacion">Asociación paleontológica:</label>
+                        <input type="text" id="searchAsociacion" placeholder="Gasterópodos" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchFosilizacion">Tipo de fosilización:</label>
+                        <input type="text" id="searchFosilizacion" placeholder="Molde interno" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchColector">Colector:</label>
+                        <input type="text" id="searchColector" placeholder="Alexander Lemus" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchFecha">Fecha de recolección:</label>
+                        <input type="text" id="searchFecha" placeholder="2025/09/25" autocomplete="off">
+                    </div>
+
+                    <button type="reset" class="btn-reset">🔄 Limpiar</button>
+                </form>
+            </section>
+
+            <!-- Contenedor de resultados y detalles -->
+            <section class="main-content">
+                <!-- Sección de resultados -->
+                <section class="results-section">
+                    <div class="results-header">
+                        <h2>Resultados</h2>
+                        <button type="button" id="toggleView" class="btn-view-toggle" title="Cambiar visualización">
+                            📊 Vista Tabla
+                        </button>
+                    </div>
+                    <div id="resultsContainer" class="results-container">
+                        <p class="info-message">Ingresa los parámetros de búsqueda</p>
+                    </div>
+                </section>
+
+                <!-- Sección de detalles (derecha) -->
+                <aside class="details-section" id="detailsSection" style="display: none;">
+                    <div class="details-header">
+                        <h3>Información Detallada</h3>
+                        <button class="btn-close-details" id="closeDetails">✕</button>
+                    </div>
+                    <div class="details-content">
+                        <div class="detail-image" id="detailImage">🔷</div>
+                        <h2 id="detailName">Nombre</h2>
+                        <p class="detail-type" id="detailType">Tipo</p>
+
+                        <div class="detail-metadata-grid">
+                            <div><strong>Genero / Especie:</strong> <span id="detailGenero">-</span></div>
+                            <div><strong>Número colección:</strong> <span id="detailNumeroColeccion">-</span></div>
+                            <div><strong>Unidad estratigráfica:</strong> <span id="detailUnidad">-</span></div>
+                            <div><strong>Localidad:</strong> <span id="detailLocalidad">-</span></div>
+                            <div><strong>Litología:</strong> <span id="detailLitologia">-</span></div>
+                            <div><strong>Edad:</strong> <span id="detailEdad">-</span></div>
+                            <div><strong>Clado:</strong> <span id="detailClado">-</span></div>
+                            <div><strong>Asociación:</strong> <span id="detailAsociacion">-</span></div>
+                            <div><strong>Fosilización:</strong> <span id="detailFosilizacion">-</span></div>
+                            <div><strong>Colector:</strong> <span id="detailColector">-</span></div>
+                            <div><strong>Recolección:</strong> <span id="detailFecha">-</span></div>
+                            <div><strong>Clasificó:</strong> <span id="detailClasifico">-</span></div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h4>Descripción</h4>
+                            <p id="detailDescription">Sin descripción</p>
+                        </div>
+
+                        <div class="detail-section">
+                            <h4>Características Especiales</h4>
+                            <ul id="detailCharacteristics" class="characteristics-detail-list">
+                                <li>Cargando...</li>
+                            </ul>
+                        </div>
+
+                        <div class="detail-actions">
+                            <button class="btn-print-detail" id="printDetailBtn">🖨️ Imprimir</button>
+                            <button class="btn-edit-detail" id="editDetailBtn">✏️ Editar</button>
+                            <button class="btn-delete-detail" id="deleteDetailBtn">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Base de Datos Geológica - Proyecto Electiva Tecnológica I</p>
+        </footer>
+    </div>
+
+    <!-- Modal para editar -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Registro</h2>
+            <form id="editForm" class="edit-form">
+                <input type="hidden" id="editId">
+                
+                <div class="form-group" id="editNombreGroup">
+                    <label for="editNombre">Nombre:</label>
+                    <input type="text" id="editNombre" required>
+                </div>
+
+                <div class="form-group" id="editTipoGroup">
+                    <label for="editTipo">Tipo:</label>
+                    <select id="editTipo" required>
+                        <option value="Piedra">Piedra</option>
+                        <option value="Mineral">Mineral</option>
+                        <option value="Molusco">Molusco</option>
+                        <option value="Fósil">Fósil</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDescripcion">Descripción:</label>
+                    <textarea id="editDescripcion" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editGeneroEspecie">Género / Especie:</label>
+                    <input type="text" id="editGeneroEspecie" placeholder="Nicklesia pulchella" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editNumeroColeccion">Número de colección:</label>
+                    <input type="number" id="editNumeroColeccion" placeholder="1" min="0">
+                </div>
+
+                <div class="form-group coordinates-group">
+                    <div>
+                        <label for="editCoordenadaX">Coordenada X:</label>
+                        <input type="number" id="editCoordenadaX" step="any" placeholder="0">
+                    </div>
+                    <div>
+                        <label for="editCoordenadaY">Coordenada Y:</label>
+                        <input type="number" id="editCoordenadaY" step="any" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editUnidad">Unidad estratigráfica:</label>
+                    <input type="text" id="editUnidad" placeholder="Formación La Paja">
+                </div>
+
+                <div class="form-group">
+                    <label for="editLocalidad">Localidad:</label>
+                    <input type="text" id="editLocalidad" placeholder="Mesa de los Santos, Santander">
+                </div>
+
+                <div class="form-group">
+                    <label for="editLitologia">Litología:</label>
+                    <input type="text" id="editLitologia" placeholder="Caliza (micrítica)">
+                </div>
+
+                <div class="form-group">
+                    <label for="editEdad">Edad:</label>
+                    <input type="text" id="editEdad" placeholder="Barremiano inferior">
+                </div>
+
+                <div class="form-group">
+                    <label for="editClado">Clado / Clasificación:</label>
+                    <input type="text" id="editClado" placeholder="Ammonoideos...">
+                </div>
+
+                <div class="form-group">
+                    <label for="editAsociacion">Asociación paleontológica:</label>
+                    <input type="text" id="editAsociacion" placeholder="Gasterópodos">
+                </div>
+
+                <div class="form-group">
+                    <label for="editFosilizacion">Tipo de fosilización:</label>
+                    <input type="text" id="editFosilizacion" placeholder="Molde interno...">
+                </div>
+
+                <div class="form-group">
+                    <label for="editColector">Colector:</label>
+                    <input type="text" id="editColector" placeholder="Alexander Lemus">
+                </div>
+
+                <div class="form-group">
+                    <label for="editFecha">Fecha de recolección:</label>
+                    <input type="text" id="editFecha" placeholder="2025/09/25">
+                </div>
+
+                <div class="form-group">
+                    <label for="editClasifico">Clasificó:</label>
+                    <input type="text" id="editClasifico" placeholder="Alexander Lemus">
+                </div>
+
+                <div class="form-group">
+                    <label for="editImagen">Imagen (emoji o URL):</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="editImagen" placeholder="Emoji o URL de imagen (https://...)" style="flex:1;" required>
+                        <button type="button" id="extractImageBtn" class="btn-reset">Extraer</button>
+                    </div>
+                    <div id="editImagePreview" style="margin-top:10px;">
+                        <!-- Previsualización de la imagen o emoji -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editFotoRuta">Foto ruta / URL:</label>
+                    <input type="text" id="editFotoRuta" placeholder="C:/... o https://...">
+                </div>
+
+                <div class="form-group">
+                    <label for="editCaracteristicas">Características (una por línea):</label>
+                    <textarea id="editCaracteristicas" rows="4" required></textarea>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="btn-save">Guardar cambios</button>
+                    <button type="button" class="btn-cancel" id="cancelEdit">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script type="module" src="scripts.js"></script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDanK18_exa_GbMc2vWnwFrMGSR-Dw1gDI",
+    authDomain: "proyecto-geologia.firebaseapp.com",
+    projectId: "proyecto-geologia",
+    storageBucket: "proyecto-geologia.firebasestorage.app",
+    messagingSenderId: "1041014004819",
+    appId: "1:1041014004819:web:fc5e0cfb38aea4d33b7aa6",
+    measurementId: "G-PEZ7N7Q9Y5"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  console.log(analytics);
+  
+</script>
+</html>
