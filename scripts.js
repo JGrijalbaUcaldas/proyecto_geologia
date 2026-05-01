@@ -421,14 +421,13 @@ function crearTarjetaResultado(item) {
         ? `<li>...y ${(item.caracteristicas || []).length - 3} más</li>`
         : '';
 
-    const genero = getFieldValue(item, 'Genero_Especie', 'generoEspecie', 'nombre');
     const resumenLocalidad = getFieldValue(item, 'Localidad', 'localidad');
     const resumenEdad = getFieldValue(item, 'Edad', 'edad');
 
     card.innerHTML = `
         <div class="result-image">${renderImageMarkup(item.imagen)}</div>
         <div class="result-content">
-            <div class="result-title">${genero}</div>
+            <div class="result-title">${item.nombre}</div>
             <p class="result-summary">${resumenLocalidad} · ${resumenEdad}</p>
             <p class="result-description">${item.descripcion}</p>
             <div class="result-characteristics">
@@ -578,8 +577,8 @@ function abrirModalEditar(id) {
     document.getElementById('editNombre').value = item.nombre;
     document.getElementById('editTipo').value = item.tipo;
     document.getElementById('editDescripcion').value = item.descripcion;
-    document.getElementById('editNombreGroup').style.display = 'none';
-    document.getElementById('editTipoGroup').style.display = 'none';
+    document.getElementById('editNombreGroup').style.display = '';
+    document.getElementById('editTipoGroup').style.display = '';
     document.getElementById('editNombre').disabled = true;
     document.getElementById('editTipo').disabled = true;
     document.getElementById('editGeneroEspecie').value = getFieldValue(item, 'Genero_Especie', 'generoEspecie');
@@ -609,8 +608,6 @@ function abrirModalEditar(id) {
     } else {
         previewDiv.innerHTML = '';
     }
-    
-    document.getElementById('editCaracteristicas').value = (item.caracteristicas || []).join('\n');
     
     editModal.style.display = 'block';
 }
@@ -642,7 +639,6 @@ function abrirModalCrear() {
     document.getElementById('editFotoRuta').value = '';
     document.getElementById('editFotoUpload').value = '';
     document.getElementById('editFotoPreview').innerHTML = '';
-    document.getElementById('editCaracteristicas').value = '';
     editModal.style.display = 'block';
 }
 
@@ -906,10 +902,7 @@ async function guardarCambios(e) {
         Fecha_Recoleccion: document.getElementById('editFecha').value || '',
         Clasifico: document.getElementById('editClasifico').value.trim() || '',
         Foto_Ruta: fotoRutaValue || '',
-        caracteristicas: document.getElementById('editCaracteristicas').value
-            .split('\n')
-            .map(c => c.trim())
-            .filter(c => c !== ''),
+        caracteristicas: [],
         fechaActualizacion: new Date().toISOString()
     };
 
