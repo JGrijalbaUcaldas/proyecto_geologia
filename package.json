@@ -1,0 +1,22 @@
+{
+  "name": "proyecto-geologia",
+  "version": "1.0.0",
+  "description": "Base de Datos Fosiles de Colombia - Búsqueda de Piedras y Moluscos",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "geology",
+    "fossils",
+    "colombia",
+    "database"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
