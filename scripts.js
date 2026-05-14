@@ -167,10 +167,10 @@ async function cargarBaseDatos() {
         console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
         
         // Si no hay datos en Firestore, cargar desde JSON inicial
-        if (geologicalDatabase.length === 0) {
-            console.log('📋 Firestore vacío, cargando datos iniciales desde JSON...');
-            await cargarDatosIniciales();
-        }
+        //if (geologicalDatabase.length === 0) {
+        //    console.log('📋 Firestore vacío, cargando datos iniciales desde JSON...');
+        //    await cargarDatosIniciales();
+        //}
     } catch (error) {
         console.error('❌ Error al cargar desde Firestore:', error);
         resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo conectar a Firestore. Verifica tu conexión a internet.</p>';
@@ -178,29 +178,30 @@ async function cargarBaseDatos() {
 }
 
 // Función para cargar datos iniciales del JSON a Firestore (solo si está vacío)
-async function cargarDatosIniciales() {
-    try {
-        const response = await fetch('db_geologia.json');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+
+// async function cargarDatosIniciales() {
+//     try {
+//         const response = await fetch('db_geologia.json');
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+//         const data = await response.json();
         
-        for (const item of data) {
-            const docRef = await addDoc(collection(db, "geologia"), item);
-            geologicalDatabase.push({
-                id: docRef.id,
-                ...item
-            });
-        }
+//         for (const item of data) {
+//             const docRef = await addDoc(collection(db, "geologia"), item);
+//             geologicalDatabase.push({
+//                 id: docRef.id,
+//                 ...item
+//             });
+//         }
         
-        console.log('✅ Datos iniciales importados a Firestore');
-        console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
-    } catch (error) {
-        console.error('❌ Error cargando datos iniciales:', error);
-        resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo cargar los datos iniciales. Asegúrate de que db_geologia.json exista.</p>';
-    }
-}
+//         console.log('✅ Datos iniciales importados a Firestore');
+//         console.log(`📊 Total de registros: ${geologicalDatabase.length}`);
+//     } catch (error) {
+//         console.error('❌ Error cargando datos iniciales:', error);
+//         resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo cargar los datos iniciales. Asegúrate de que db_geologia.json exista.</p>';
+//     }
+// }
 
 // Función para ordenar resultados
 function aplicarOrdenamiento(resultados) {
