@@ -10,10 +10,13 @@
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
-<body>
+<body class="guest-mode">
     <div class="container">
         <header>
-            <h1>🌍 Base de Datos Fosiles de Colombia</h1>
+            <div class="header-auth">
+                <button id="authBtn" class="btn-auth">🔐 Login</button>
+            </div>
+            <h1 class="main-title">🌍 Base de Datos Fosiles de Colombia</h1>
             <p>Busca piedras, minerales y moluscos fósiles</p>
         </header>
 
@@ -23,7 +26,7 @@
                 <div class="search-header">
                     <h2>Búsqueda</h2>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <button type="button" id="openCreateBtn" class="btn-primary" title="Crear registro">
+                        <button type="button" id="openCreateBtn" class="btn-primary admin-only" title="Crear registro">
                             ➕ Crear Registro
                         </button>
                     </div>
@@ -150,8 +153,8 @@
 
                         <div class="detail-actions">
                             <button class="btn-print-detail" id="printDetailBtn">🖨️ Imprimir</button>
-                            <button class="btn-edit-detail" id="editDetailBtn">✏️ Editar</button>
-                            <button class="btn-delete-detail" id="deleteDetailBtn">🗑️ Eliminar</button>
+                            <button class="btn-edit-detail admin-only" id="editDetailBtn">✏️ Editar</button>
+                            <button class="btn-delete-detail admin-only" id="deleteDetailBtn">🗑️ Eliminar</button>
                         </div>
                     </div>
                 </aside>

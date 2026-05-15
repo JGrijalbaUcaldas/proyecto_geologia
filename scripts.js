@@ -1,6 +1,7 @@
 // Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
 // Configuración de Firebase (igual a la del HTML)
 const firebaseConfig = {
@@ -16,6 +17,7 @@ const firebaseConfig = {
 // Inicializar Firebase y Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Variable global para la base de datos
 let geologicalDatabase = [];
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editFotoUpload = document.getElementById('editFotoUpload');
     const previewUploadBtn = document.getElementById('previewUploadBtn');
     const editFotoPreview = document.getElementById('editFotoPreview');
+    const authBtn = document.getElementById('authBtn');
 
     // Agregar event listeners
     searchGeneroInput.addEventListener('input', realizarBusqueda);
@@ -122,6 +125,50 @@ document.addEventListener('DOMContentLoaded', function() {
             convertirFotoABase64(editFotoUpload, editFotoPreview, document.getElementById('editFotoRuta'));
         });
     }
+
+    // Manejo de Autenticación
+    if (authBtn) {
+        authBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    await signOut(auth);
+                    alert('Cerraste sesión correctamente');
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                }
+            } else {
+                const email = prompt('Ingresa tu correo electrónico:');
+                if (!email) return;
+                const password = prompt('Ingresa tu contraseña:');
+                if (!password) return;
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    alert('Bienvenido administrador');
+                } catch (error) {
+                    console.error('Error de autenticación:', error);
+                    alert('Credenciales incorrectas');
+                }
+            }
+        });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        const isAdmin = !!user;
+        authBtn.textContent = isAdmin ? '🔓 Cerrar Sesión' : '🔐 Login';
+        document.body.classList.toggle('guest-mode', !isAdmin);
+
+        // Actualizar visibilidad de elementos admin
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = isAdmin ? 'block' : 'none';
+        });
+
+        // Si estamos en la página de resultados, refrescamos la vista para mostrar/ocultar botones de editar/borrar
+        if (ultimosBuscados.length > 0) {
+            mostrarResultados(ultimosBuscados);
+        }
+    });
 
     // Cerrar modal si se hace click afuera
     window.addEventListener('click', function(e) {
@@ -202,6 +249,14 @@ async function cargarBaseDatos() {
 //         resultsContainer.innerHTML = '<p class="no-results">❌ Error: No se pudo cargar los datos iniciales. Asegúrate de que db_geologia.json exista.</p>';
 //     }
 // }
+
+// Función para escapar HTML y prevenir XSS
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 
 // Función para ordenar resultados
 function aplicarOrdenamiento(resultados) {
@@ -368,21 +423,58 @@ function mostrarResultadosTabla(resultados) {
         const genero = getFieldValue(item, 'Genero_Especie', 'generoEspecie', 'nombre');
         const localidad = getFieldValue(item, 'Localidad', 'localidad');
         const edad = getFieldValue(item, 'Edad', 'edad');
-        fila.innerHTML = `
-            <td style="text-align: center; vertical-align: middle;">${renderImageMarkup(item.imagen)}</td>
-            <td><strong>${genero}</strong></td>
-            <td>${localidad}</td>
-            <td>${edad}</td>
-            <td>
-                <div class="table-actions" style="flex-direction: column; gap: 5px;">
-                    <button type="button" class="btn-edit" style="width: 100%; padding: 6px;">✏️ Editar</button>
-                    <button type="button" class="btn-delete" style="width: 100%; padding: 6px;">🗑️ Eliminar</button>
-                </div>
-            </td>
-        `;
-        
-        const editBtn = fila.querySelector('.btn-edit');
-        const deleteBtn = fila.querySelector('.btn-delete');
+
+        // Celda Imagen
+        const tdImg = document.createElement('td');
+        tdImg.style.textAlign = 'center';
+        tdImg.style.verticalAlign = 'middle';
+        tdImg.innerHTML = renderImageMarkup(item.imagen); // El markup de imagen es controlado por renderImageMarkup
+
+        // Celda Género
+        const tdGen = document.createElement('td');
+        const strongGen = document.createElement('strong');
+        strongGen.textContent = genero;
+        tdGen.appendChild(strongGen);
+
+        // Celda Localidad
+        const tdLoc = document.createElement('td');
+        tdLoc.textContent = localidad;
+
+        // Celda Edad
+        const tdEdad = document.createElement('td');
+        tdEdad.textContent = edad;
+
+        // Celda Acciones
+        const tdAct = document.createElement('td');
+        const divAct = document.createElement('div');
+        divAct.className = 'table-actions admin-only';
+        divAct.style.flexDirection = 'column';
+        divAct.style.gap = '5px';
+        divAct.style.display = auth.currentUser ? 'flex' : 'none';
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'btn-edit';
+        editBtn.style.width = '100%';
+        editBtn.style.padding = '6px';
+        editBtn.textContent = '✏️ Editar';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn-delete';
+        deleteBtn.style.width = '100%';
+        deleteBtn.style.padding = '6px';
+        deleteBtn.textContent = '🗑️ Eliminar';
+
+        divAct.appendChild(editBtn);
+        divAct.appendChild(deleteBtn);
+        tdAct.appendChild(divAct);
+
+        fila.appendChild(tdImg);
+        fila.appendChild(tdGen);
+        fila.appendChild(tdLoc);
+        fila.appendChild(tdEdad);
+        fila.appendChild(tdAct);
 
         editBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -393,15 +485,14 @@ function mostrarResultadosTabla(resultados) {
             e.stopPropagation();
             eliminarRegistro(item.id);
         });
-        
-        // Hacer clickeable la fila (excepto los botones)
+
         fila.addEventListener('click', function(e) {
             if (!e.target.closest('button')) {
                 especimenSeleccionado = item.id;
                 mostrarDetalles(item);
             }
         });
-        
+
         tbody.appendChild(fila);
     });
     tabla.appendChild(tbody);
@@ -414,38 +505,79 @@ function crearTarjetaResultado(item) {
     const card = document.createElement('div');
     card.className = 'result-card';
 
-    const caracteristicasPreview = (item.caracteristicas || [])
-        .slice(0, 3)
-        .map(caract => `<li>${caract}</li>`)
-        .join('');
-    const caracteristicasExtra = (item.caracteristicas || []).length > 3
-        ? `<li>...y ${(item.caracteristicas || []).length - 3} más</li>`
-        : '';
+    // Imagen
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'result-image';
+    imgDiv.innerHTML = renderImageMarkup(item.imagen);
+    card.appendChild(imgDiv);
 
-    const resumenLocalidad = getFieldValue(item, 'Localidad', 'localidad');
-    const resumenEdad = getFieldValue(item, 'Edad', 'edad');
+    // Contenido
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'result-content';
 
-    card.innerHTML = `
-        <div class="result-image">${renderImageMarkup(item.imagen)}</div>
-        <div class="result-content">
-            <div class="result-title">${item.nombre}</div>
-            <p class="result-summary">${resumenLocalidad} · ${resumenEdad}</p>
-            <p class="result-description">${item.descripcion}</p>
-            <div class="result-characteristics">
-                <div class="characteristics-label">📋 Características:</div>
-                <ul class="characteristics-list">
-                    ${caracteristicasPreview}${caracteristicasExtra}
-                </ul>
-            </div>
-            <div class="result-actions">
-                <button type="button" class="btn-edit" style="margin-right: 8px;">✏️ Editar</button>
-                <button type="button" class="btn-delete">🗑️ Eliminar</button>
-            </div>
-        </div>
-    `;
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'result-title';
+    titleDiv.textContent = item.nombre;
+    contentDiv.appendChild(titleDiv);
 
-    const editButton = card.querySelector('.btn-edit');
-    const deleteButton = card.querySelector('.btn-delete');
+    const summaryP = document.createElement('p');
+    summaryP.className = 'result-summary';
+    summaryP.textContent = `${getFieldValue(item, 'Localidad', 'localidad')} · ${getFieldValue(item, 'Edad', 'edad')}`;
+    contentDiv.appendChild(summaryP);
+
+    const descP = document.createElement('p');
+    descP.className = 'result-description';
+    descP.textContent = item.descripcion;
+    contentDiv.appendChild(descP);
+
+    // Características
+    const charDiv = document.createElement('div');
+    charDiv.className = 'result-characteristics';
+
+    const charLabel = document.createElement('div');
+    charLabel.className = 'characteristics-label';
+    charLabel.textContent = '📋 Características:';
+    charDiv.appendChild(charLabel);
+
+    const charList = document.createElement('ul');
+    charList.className = 'characteristics-list';
+
+    const caracts = item.caracteristicas || [];
+    caracts.slice(0, 3).forEach(caract => {
+        const li = document.createElement('li');
+        li.textContent = caract;
+        charList.appendChild(li);
+    });
+
+    if (caracts.length > 3) {
+        const liExtra = document.createElement('li');
+        liExtra.textContent = `...y ${caracts.length - 3} más`;
+        charList.appendChild(liExtra);
+    }
+    charDiv.appendChild(charList);
+    contentDiv.appendChild(charDiv);
+
+    // Acciones
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'result-actions admin-only';
+    actionsDiv.style.display = auth.currentUser ? 'flex' : 'none';
+
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'btn-edit';
+    editButton.style.marginRight = '8px';
+    editButton.textContent = '✏️ Editar';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn-delete';
+    deleteButton.textContent = '🗑️ Eliminar';
+
+    actionsDiv.appendChild(editButton);
+    actionsDiv.appendChild(deleteButton);
+    contentDiv.appendChild(actionsDiv);
+
+    card.appendChild(contentDiv);
 
     editButton.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -457,7 +589,6 @@ function crearTarjetaResultado(item) {
         eliminarRegistro(item.id);
     });
 
-    // Agregar evento de click para mostrar detalles
     card.style.cursor = 'pointer';
     card.addEventListener('click', function(e) {
         if (!e.target.closest('button')) {
@@ -490,12 +621,22 @@ function mostrarDetalles(item) {
     document.getElementById('detailFecha').textContent = getFieldValue(item, 'Fecha_Recoleccion', 'fechaRecoleccion');
     document.getElementById('detailClasifico').textContent = getFieldValue(item, 'Clasifico', 'clasifico');
     
-    const caracteristicasHTML = (item.caracteristicas || [])
-        .map(caract => `<li>${caract}</li>`)
-        .join('');
-    
-    document.getElementById('detailCharacteristics').innerHTML = caracteristicasHTML;
-    
+    const charList = document.getElementById('detailCharacteristics');
+    charList.innerHTML = '';
+
+    const caracts = item.caracteristicas || [];
+    if (caracts.length === 0) {
+        const liEmpty = document.createElement('li');
+        liEmpty.textContent = '-';
+        charList.appendChild(liEmpty);
+    } else {
+        caracts.forEach(caract => {
+            const li = document.createElement('li');
+            li.textContent = caract;
+            charList.appendChild(li);
+        });
+    }
+
     document.getElementById('editDetailBtn').onclick = function() {
         abrirModalEditar(item.id);
     };
@@ -536,30 +677,30 @@ function imprimirRegistro(item) {
 </head>
 <body>
 <button class="print-button" onclick="window.print();">Imprimir</button>
-<h1>${item.nombre || 'Registro'}</h1>
+<h1>${escapeHTML(item.nombre || 'Registro')}</h1>
 <div class="record-image">${imageMarkup}</div>
-<p><strong>Tipo:</strong> ${item.tipo || '-'}</p>
+<p><strong>Tipo:</strong> ${escapeHTML(item.tipo || '-')}</p>
 <div class="section">
     <h2>Descripción</h2>
-    <p>${item.descripcion || '-'}</p>
+    <p>${escapeHTML(item.descripcion || '-')}</p>
 </div>
 <div class="metadata">
-    <div><strong>Género / Especie:</strong> ${getFieldValue(item, 'Genero_Especie', 'generoEspecie', 'nombre') || '-'}</div>
-    <div><strong>Número colección:</strong> ${getFieldValue(item, 'Numero_Coleccion', 'numeroColeccion') || '-'}</div>
-    <div><strong>Unidad estratigráfica:</strong> ${getFieldValue(item, 'Unidad_Estratigrafica', 'unidadEstratigrafica') || '-'}</div>
-    <div><strong>Localidad:</strong> ${getFieldValue(item, 'Localidad', 'localidad') || '-'}</div>
-    <div><strong>Litología:</strong> ${getFieldValue(item, 'Litologia', 'litologia') || '-'}</div>
-    <div><strong>Edad:</strong> ${getFieldValue(item, 'Edad', 'edad') || '-'}</div>
-    <div><strong>Clado:</strong> ${getFieldValue(item, 'Clado_Clasificacion', 'clado', 'cladoClasificacion') || '-'}</div>
-    <div><strong>Asociación:</strong> ${getFieldValue(item, 'Asociacion_Paleontologica', 'asociacion', 'asociacionPaleontologica') || '-'}</div>
-    <div><strong>Fosilización:</strong> ${getFieldValue(item, 'Tipo_Fosilzacion', 'fosilizacion') || '-'}</div>
-    <div><strong>Colector:</strong> ${getFieldValue(item, 'Colector', 'colector') || '-'}</div>
-    <div><strong>Recolección:</strong> ${getFieldValue(item, 'Fecha_Recoleccion', 'fechaRecoleccion') || '-'}</div>
-    <div><strong>Clasificó:</strong> ${getFieldValue(item, 'Clasifico', 'clasifico') || '-'}</div>
+    <div><strong>Género / Especie:</strong> ${escapeHTML(getFieldValue(item, 'Genero_Especie', 'generoEspecie', 'nombre') || '-')}</div>
+    <div><strong>Número colección:</strong> ${escapeHTML(getFieldValue(item, 'Numero_Coleccion', 'numeroColeccion') || '-')}</div>
+    <div><strong>Unidad estratigráfica:</strong> ${escapeHTML(getFieldValue(item, 'Unidad_Estratigrafica', 'unidadEstratigrafica') || '-')}</div>
+    <div><strong>Localidad:</strong> ${escapeHTML(getFieldValue(item, 'Localidad', 'localidad') || '-')}</div>
+    <div><strong>Litología:</strong> ${escapeHTML(getFieldValue(item, 'Litologia', 'litologia') || '-')}</div>
+    <div><strong>Edad:</strong> ${escapeHTML(getFieldValue(item, 'Edad', 'edad') || '-')}</div>
+    <div><strong>Clado:</strong> ${escapeHTML(getFieldValue(item, 'Clado_Clasificacion', 'clado', 'cladoClasificacion') || '-')}</div>
+    <div><strong>Asociación:</strong> ${escapeHTML(getFieldValue(item, 'Asociacion_Paleontologica', 'asociacion', 'asociacionPaleontologica') || '-')}</div>
+    <div><strong>Fosilización:</strong> ${escapeHTML(getFieldValue(item, 'Tipo_Fosilzacion', 'fosilizacion') || '-')}</div>
+    <div><strong>Colector:</strong> ${escapeHTML(getFieldValue(item, 'Colector', 'colector') || '-')}</div>
+    <div><strong>Recolección:</strong> ${escapeHTML(getFieldValue(item, 'Fecha_Recoleccion', 'fechaRecoleccion') || '-')}</div>
+    <div><strong>Clasificó:</strong> ${escapeHTML(getFieldValue(item, 'Clasifico', 'clasifico') || '-')}</div>
 </div>
 <div class="section">
     <h2>Características</h2>
-    <ul>${(item.caracteristicas || []).map(caract => `<li>${caract}</li>`).join('') || '<li>-</li>'}</ul>
+    <ul>${(item.caracteristicas || []).map(caract => `<li>${escapeHTML(caract)}</li>`).join('') || '<li>-</li>'}</ul>
 </div>
 </body>
 </html>`;
