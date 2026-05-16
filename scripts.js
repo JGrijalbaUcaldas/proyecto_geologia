@@ -530,32 +530,32 @@ function crearTarjetaResultado(item) {
     descP.textContent = item.descripcion;
     contentDiv.appendChild(descP);
 
-    // Características
-    const charDiv = document.createElement('div');
-    charDiv.className = 'result-characteristics';
+    // // Características
+    // const charDiv = document.createElement('div');
+    // charDiv.className = 'result-characteristics';
 
-    const charLabel = document.createElement('div');
-    charLabel.className = 'characteristics-label';
-    charLabel.textContent = '📋 Características:';
-    charDiv.appendChild(charLabel);
+    // const charLabel = document.createElement('div');
+    // charLabel.className = 'characteristics-label';
+    // charLabel.textContent = '📋 Características:';
+    // charDiv.appendChild(charLabel);
 
-    const charList = document.createElement('ul');
-    charList.className = 'characteristics-list';
+    // const charList = document.createElement('ul');
+    // charList.className = 'characteristics-list';
 
-    const caracts = item.caracteristicas || [];
-    caracts.slice(0, 3).forEach(caract => {
-        const li = document.createElement('li');
-        li.textContent = caract;
-        charList.appendChild(li);
-    });
+    // const caracts = item.caracteristicas || [];
+    // caracts.slice(0, 3).forEach(caract => {
+    //     const li = document.createElement('li');
+    //     li.textContent = caract;
+    //     charList.appendChild(li);
+    // });
 
-    if (caracts.length > 3) {
-        const liExtra = document.createElement('li');
-        liExtra.textContent = `...y ${caracts.length - 3} más`;
-        charList.appendChild(liExtra);
-    }
-    charDiv.appendChild(charList);
-    contentDiv.appendChild(charDiv);
+    // if (caracts.length > 3) {
+    //     const liExtra = document.createElement('li');
+    //     liExtra.textContent = `...y ${caracts.length - 3} más`;
+    //     charList.appendChild(liExtra);
+    // }
+    // charDiv.appendChild(charList);
+    // contentDiv.appendChild(charDiv);
 
     // Acciones
     const actionsDiv = document.createElement('div');
@@ -621,21 +621,22 @@ function mostrarDetalles(item) {
     document.getElementById('detailFecha').textContent = getFieldValue(item, 'Fecha_Recoleccion', 'fechaRecoleccion');
     document.getElementById('detailClasifico').textContent = getFieldValue(item, 'Clasifico', 'clasifico');
     
-    const charList = document.getElementById('detailCharacteristics');
-    charList.innerHTML = '';
+    // CARACTERÍSTICAS ESPECIALES
+    // const charList = document.getElementById('detailCharacteristics');
+    // charList.innerHTML = '';
 
-    const caracts = item.caracteristicas || [];
-    if (caracts.length === 0) {
-        const liEmpty = document.createElement('li');
-        liEmpty.textContent = '-';
-        charList.appendChild(liEmpty);
-    } else {
-        caracts.forEach(caract => {
-            const li = document.createElement('li');
-            li.textContent = caract;
-            charList.appendChild(li);
-        });
-    }
+    // const caracts = item.caracteristicas || [];
+    // if (caracts.length === 0) {
+    //     const liEmpty = document.createElement('li');
+    //     liEmpty.textContent = '-';
+    //     charList.appendChild(liEmpty);
+    // } else {
+    //     caracts.forEach(caract => {
+    //         const li = document.createElement('li');
+    //         li.textContent = caract;
+    //         charList.appendChild(li);
+    //     });
+    // }
 
     document.getElementById('editDetailBtn').onclick = function() {
         abrirModalEditar(item.id);
